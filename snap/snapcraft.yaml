@@ -160,7 +160,7 @@ parts:
       - --enable-ctype
       - --enable-mbstring
       - --enable-zip
-      - --with-libdir=
+      - --with-libdir=$AUTOSET
       - --with-ldap
       - --with-pdo-mysql
       - --with-zlib

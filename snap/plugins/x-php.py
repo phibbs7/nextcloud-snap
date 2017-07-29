@@ -96,6 +96,19 @@ class PhpPlugin(autotools.AutotoolsPlugin):
         if os.path.exists(self.extensions_directory):
             shutil.rmtree(self.extensions_directory)
 
+    def __fix_libpath_getArch(self):
+        archCheck_raw = subprocess.check_output("uname -m", shell=True)
+        # Check for 64bit system.
+        if '64' in archCheck_raw:
+            archCheck_raw = '1'
+            archCheck = int(archCheck_raw.decode('utf-8'))
+            return archCheck
+        else: # '64' in archCheck_raw
+            # Assume 32bit.
+            archCheck_raw = '0'
+            archCheck = int(archCheck_raw.decode('utf-8'))
+            return archCheck
+
     def __fix_libpath_getDist(self):
         # Because my alternative to the missing "endif" is goto....
         # Get the current distro.
@@ -112,13 +125,17 @@ class PhpPlugin(autotools.AutotoolsPlugin):
             libPath = ('lib/' + libPath_raw.decode('utf-8')).rstrip('\r\n')
             return libPath
         else:
-            # The default is to not modifiy anything.
-            libPath = ''
+            # The default is to use either lib or lib64 depending on the system arch.
+            archCheck = self.__fix_libpath_getArch()
+            if archCheck == 1:
+                libPath = ('lib64').rstrip('\r\n')
+            else: # archCheck == 1
+                libPath = ('lib').rstrip('\r\n')
             return libPath
 
     def __fix_libpath_fixFlag(self, flag, libPath, count):
         # Check for the correct flag and fix it if found.
-        if "--with-libdir=" in flag:
+        if "--with-libdir=$AUTOSET" in flag:
             # Got a match fix the flag.
             fixed_flag = '--with-libdir=' + libPath
             logger.info('Fixing libdir flag at configflag index ' + str(count) + ' to: \'' + fixed_flag + '\'')
